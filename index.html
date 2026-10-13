@@ -3,302 +3,771 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Snake</title>
+<title>Champagne Sparkles Cat Den</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Monoton&family=Audiowide&display=swap">
 <style>
+  /* Vaporwave: sunset sky, striped sun, neon board. One centered column — title, board, stats, controls, colour tool. */
   :root {
-    --bg: #10141a;
-    --panel: #171d26;
-    --grid: #1d2530;
-    --text: #e6edf3;
-    --muted: #8b98a8;
-    --snake: #f472b6;
-    --head: #fbcfe8;
-    --food: #fde047;
-    --leaf: #84cc16;
+    --bg: #1a0b2e;
+    --fg: #f6e9ff;
+    --muted: #c3aaea;
+    --board: #140a26;
+    --cyan: #00f0ff;
+    --snake: #ff4fd8;      /* the cat's current colour; changes with every drink */
+    --start-hue: 313;      /* set by the colour tool */
+    --snake-hi: #ffb3ee;
+    --snake-eye: #1a0b2e;
+    --sparkle: #ffffff;
+    --control: rgba(20, 10, 38, 0.72);
+    --font-display: "Monoton", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+    --font-body: "Audiowide", "Avenir Next", "Segoe UI", sans-serif;
+    color-scheme: dark;
   }
+
   * { box-sizing: border-box; }
-  html, body { height: 100%; }
   body {
     margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    display: flex;
-    padding: 16px;
+    min-height: 100vh;
+    /* Stars over a sunset sky that ends at the horizon (64% down), dark floor below */
+    background:
+      radial-gradient(circle at 8% 12%, #fff 0 1px, transparent 1.6px),
+      radial-gradient(circle at 21% 31%, #fff 0 1px, transparent 1.6px),
+      radial-gradient(circle at 33% 9%, #9ff 0 1.2px, transparent 1.8px),
+      radial-gradient(circle at 46% 24%, #fff 0 0.8px, transparent 1.4px),
+      radial-gradient(circle at 58% 6%, #fff 0 1px, transparent 1.6px),
+      radial-gradient(circle at 67% 33%, #fbf 0 1.2px, transparent 1.8px),
+      radial-gradient(circle at 79% 15%, #fff 0 1px, transparent 1.6px),
+      radial-gradient(circle at 91% 27%, #fff 0 0.8px, transparent 1.4px),
+      radial-gradient(circle at 14% 42%, #fff 0 0.8px, transparent 1.4px),
+      radial-gradient(circle at 87% 44%, #9ff 0 1px, transparent 1.6px),
+      linear-gradient(180deg, #12062a 0%, #2d1160 30%, #7a1f8a 48%, #ff5fa2 59%, #ffb36b 64%, #1a0b2e 64.1%, #0d0520 100%);
+    background-attachment: fixed;
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 16px;
+    padding-inline: 16px;
+    padding-block: 28px 40px;
   }
-  /* Keep the whole board on screen in short windows */
-  main { width: min(100%, 480px, 100vh - 120px); min-width: 220px; margin: auto; }
+  /* Retro sun: solid top half, striped bottom half */
+  body::before {
+    content: "";
+    position: fixed;
+    z-index: -1;
+    top: 24px;
+    left: 50%;
+    width: min(300px, 70vw);
+    aspect-ratio: 1;
+    translate: -50% 0;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #ffe66d 0%, #ff9f43 45%, #ff4fd8 100%);
+    opacity: 0.5;
+    -webkit-mask: linear-gradient(#000, #000) top / 100% 50% no-repeat,
+      repeating-linear-gradient(180deg, #000 0 10px, transparent 10px 17px) bottom / 100% 50% no-repeat;
+    mask: linear-gradient(#000, #000) top / 100% 50% no-repeat,
+      repeating-linear-gradient(180deg, #000 0 10px, transparent 10px 17px) bottom / 100% 50% no-repeat;
+  }
+  /* Neon grid floor rolling toward the viewer from the horizon */
+  body::after {
+    content: "";
+    position: fixed;
+    z-index: -1;
+    left: -60%;
+    right: -60%;
+    bottom: 0;
+    height: 36vh;
+    background-image:
+      linear-gradient(#ff4fd8 2px, transparent 2px),
+      linear-gradient(90deg, #ff4fd8 2px, transparent 2px);
+    background-size: 64px 64px;
+    transform-origin: top center;
+    transform: perspective(280px) rotateX(58deg);
+    -webkit-mask: linear-gradient(transparent, #000 30%);
+    mask: linear-gradient(transparent, #000 30%);
+    opacity: 0.7;
+    animation: floor 1.4s linear infinite;
+  }
+  @keyframes floor { to { background-position: 0 64px; } }
+  /* Mountain ridge sitting on the horizon */
+  html::after {
+    content: "";
+    position: fixed;
+    z-index: -1;
+    left: 0;
+    right: 0;
+    bottom: 36vh;
+    height: 11vh;
+    background: linear-gradient(180deg, #4a1a8a, #1a0b2e);
+    clip-path: polygon(0 100%, 0 62%, 7% 30%, 13% 58%, 20% 12%, 27% 55%, 33% 38%, 40% 80%, 60% 80%, 66% 34%, 73% 60%, 80% 8%, 87% 52%, 94% 26%, 100% 60%, 100% 100%);
+  }
+  /* Faint CRT scanlines over everything */
+  html::before {
+    content: "";
+    position: fixed;
+    z-index: 10;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px);
+  }
+  @media (prefers-reduced-motion: reduce) { body::after { animation: none; } }
+
+  main {
+    /* Keep the square board on screen in short windows */
+    max-width: clamp(260px, 100vh - 300px, 560px);
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
   header {
     display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 12px;
+    flex-direction: column;
+    gap: 8px;
   }
-  h1 { font-size: 20px; margin: 0; letter-spacing: 0.15em; }
-  .scores { display: flex; gap: 20px; font-size: 14px; color: var(--muted); }
-  .scores b { color: var(--text); font-variant-numeric: tabular-nums; }
-  .board { position: relative; }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(1.5rem, 6vw, 2.3rem);
+    line-height: 1.15;
+    margin: 0;
+    background: linear-gradient(90deg, var(--snake), var(--cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--snake) 60%, transparent));
+    text-wrap: balance;
+  }
+  .status {
+    margin: 0;
+    color: var(--cyan);
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px color-mix(in srgb, var(--cyan) 60%, transparent);
+  }
+
   canvas {
     display: block;
     width: 100%;
+    max-width: 100%;
     aspect-ratio: 1;
-    background: var(--panel);
     border-radius: 10px;
+    border: 3px solid var(--snake);
+    box-shadow: 0 0 26px color-mix(in srgb, var(--snake) 65%, transparent), 0 0 60px rgba(0, 240, 255, 0.25);
+    background: var(--board);
     touch-action: none;
   }
-  .overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    background: rgba(16, 20, 26, 0.78);
-    border-radius: 10px;
-    text-align: center;
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 0;
   }
-  .overlay[hidden] { display: none; }
-  .overlay h2 { margin: 0; font-size: 26px; }
-  .overlay p { margin: 0; color: var(--muted); font-size: 14px; }
+  .stats div { min-width: 0; }
+  .stats dt {
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .stats dd {
+    margin: 2px 0 0;
+    font-size: 1.6rem;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: var(--cyan);
+    text-shadow: 0 0 10px color-mix(in srgb, var(--cyan) 70%, transparent);
+  }
+
+  .controls, .palette {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+  }
   button {
-    font: inherit;
-    color: #2a0f1d;
-    background: var(--snake);
-    border: 0;
-    border-radius: 8px;
-    padding: 10px 22px;
-    font-weight: 700;
+    font: 400 0.85rem var(--font-body);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg);
+    background: var(--control);
+    border: 2px solid var(--cyan);
+    border-radius: 999px;
+    padding: 9px 20px;
     cursor: pointer;
   }
-  button:hover { filter: brightness(1.1); }
-  button:focus-visible { outline: 2px solid var(--head); outline-offset: 3px; }
-  footer { margin-top: 12px; font-size: 12px; color: var(--muted); text-align: center; }
+  button:hover { box-shadow: 0 0 14px color-mix(in srgb, var(--cyan) 70%, transparent); }
+  button.primary { background: var(--snake); border-color: var(--snake); color: #140a26; }
+  button.primary:hover { box-shadow: 0 0 14px var(--snake); }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+  label.speed, label.custom, .palette-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  label.speed { flex: 1 1 200px; min-width: 0; }
+  input[type="range"] { flex: 1; min-width: 0; accent-color: var(--snake); }
+  .help { margin: 0; color: var(--fg); font-size: 0.75rem; line-height: 1.6; opacity: 0.85; }
+
+  .stats, .controls, .palette, .help {
+    padding: 12px 14px;
+    border: 2px solid color-mix(in srgb, var(--cyan) 55%, transparent);
+    border-radius: 10px;
+    background: var(--control);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+  .palette-label { flex-basis: 100%; }
+  /* Rainbow scale: the track is the spectrum, the thumb shows the chosen colour */
+  #hue {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1 1 100%;
+    height: 20px;
+    margin: 4px 0;
+    border: 2px solid var(--fg);
+    border-radius: 999px;
+    background: linear-gradient(90deg, hsl(0 100% 62%), hsl(60 100% 62%), hsl(120 100% 62%),
+      hsl(180 100% 62%), hsl(240 100% 62%), hsl(300 100% 62%), hsl(360 100% 62%));
+    cursor: pointer;
+  }
+  #hue::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    background: hsl(var(--start-hue) 100% 62%);
+    box-shadow: 0 0 14px hsl(var(--start-hue) 100% 62%);
+  }
+  #hue::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    background: hsl(var(--start-hue) 100% 62%);
+    box-shadow: 0 0 14px hsl(var(--start-hue) 100% 62%);
+  }
+  #hue::-moz-range-track { background: transparent; }
 </style>
 </head>
 <body>
 <main>
   <header>
-    <h1>SNAKE</h1>
-    <div class="scores">
-      <span>Score <b id="score">0</b></span>
-      <span>Best <b id="best">0</b></span>
-    </div>
+    <h1>Champagne Sparkles Cat Den</h1>
+    <p class="status" id="status" aria-live="polite">Press an arrow key or WASD to start</p>
   </header>
-  <div class="board">
-    <canvas id="game" width="480" height="480"></canvas>
-    <div class="overlay" id="overlay">
-      <h2 id="overlay-title">Snake</h2>
-      <p id="overlay-text">Eat the lemons. Don't hit the walls or yourself.</p>
-      <button id="start">Play</button>
-    </div>
+
+  <canvas id="board" role="img" aria-label="A long neon cat on a 20 by 20 grid, sipping cocktails"></canvas>
+
+  <dl class="stats">
+    <div><dt>Score</dt><dd id="s-score">0</dd></div>
+    <div><dt>Best</dt><dd id="s-best">0</dd></div>
+    <div><dt>Length</dt><dd id="s-length">3</dd></div>
+  </dl>
+
+  <div class="controls">
+    <button class="primary" id="pause" type="button">Pause</button>
+    <button id="restart" type="button">New game</button>
+    <label class="speed" for="speed">Speed
+      <input id="speed" type="range" min="4" max="20" value="8" step="1">
+    </label>
   </div>
-  <footer>Arrow keys / WASD or swipe to move · Space to pause</footer>
+
+  <p class="help">Arrow keys or WASD to steer, or swipe on the board. Space, P or the Pause button pauses. The cat changes colour with every cocktail. Walls, your own tail and aliens end the game, and the aliens hunt the cat. A faint alien inside a dotted ring is still beaming in and can't hurt you yet.</p>
+
+  <div class="palette">
+    <label class="palette-label" for="hue">Cat starting colour</label>
+    <input id="hue" type="range" min="0" max="360" value="313" step="1">
+  </div>
 </main>
 
 <script>
 (() => {
-  const CELLS = 20;
-  const START_DELAY = 140;
-  const MIN_DELAY = 60;
-  const SPEEDUP = 3;
+  const W = 20, H = 20, N = W * H;
 
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  const scoreEl = document.getElementById('score');
-  const bestEl = document.getElementById('best');
-  const overlay = document.getElementById('overlay');
-  const overlayTitle = document.getElementById('overlay-title');
-  const overlayText = document.getElementById('overlay-text');
-  const startBtn = document.getElementById('start');
-
-  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  const colors = { grid: css('--grid'), snake: css('--snake'), head: css('--head'), food: css('--food'), leaf: css('--leaf') };
-  const size = canvas.width / CELLS;
-
-  let snake, dir, queue, food, score, delay, state, last, acc;
+  // state: 'ready' (waiting for the first move), 'playing', 'paused', 'over', 'won'
+  const DRINKS = ['cosmo', 'lagoon', 'mojito', 'sunrise', 'aviation'];
+  const DRINK_COLOR = { cosmo: '#ff5fa2', lagoon: '#27c4ff', mojito: '#7dff6a', sunrise: '#ff8a3d', aviation: '#b967ff' };
+  let snake, occ, food, drink, prevTail, dir, queue, score, state;
+  // Aliens pop in on empty cells: harmless while beaming in (ALIEN_WARN steps), then deadly and hunting the cat
+  // one cell every ALIEN_PACE steps until they leave (ALIEN_LIFE steps).
+  const ALIEN_WARN = 6, ALIEN_LIFE = 46, ALIEN_PACE = 3, ALIEN_COLOR = '#39ff14';
+  const aliens = new Map(); // cell -> { age in steps, from: cell it was in last step }
+  let alienIn; // steps until the next one tries to appear
   let best = 0;
-  try { best = Number(localStorage.getItem('snake-best')) || 0; } catch {}
-  bestEl.textContent = best;
-
-  function reset() {
-    const mid = Math.floor(CELLS / 2);
-    snake = [{ x: mid, y: mid }, { x: mid - 1, y: mid }, { x: mid - 2, y: mid }];
-    dir = { x: 1, y: 0 };
-    queue = [];
-    score = 0;
-    delay = START_DELAY;
-    scoreEl.textContent = 0;
-    placeFood();
-  }
+  try { best = Number(localStorage.getItem('sparkles-snake-best')) || 0; } catch {}
 
   function placeFood() {
     const free = [];
-    for (let y = 0; y < CELLS; y++) {
-      for (let x = 0; x < CELLS; x++) {
-        if (!snake.some(s => s.x === x && s.y === y)) free.push({ x, y });
-      }
-    }
-    food = free.length ? free[Math.floor(Math.random() * free.length)] : null;
+    for (let c = 0; c < N; c++) if (!occ[c] && !aliens.has(c)) free.push(c);
+    food = free.length ? free[Math.floor(Math.random() * free.length)] : -1;
+    // A different cocktail from the one just drunk
+    const others = DRINKS.filter(f => f !== drink);
+    drink = others[Math.floor(Math.random() * others.length)];
   }
 
-  function turn(x, y) {
+  function reset() {
+    const y = H / 2, x = W / 2;
+    snake = [x + y * W, x - 1 + y * W, x - 2 + y * W];
+    occ = new Uint8Array(N);
+    snake.forEach(c => occ[c] = 1);
+    prevTail = snake[snake.length - 1];
+    dir = [1, 0];
+    queue = [];
+    score = 0;
+    acc = 0;
+    state = 'ready';
+    aliens.clear();
+    alienIn = 5;
+    paintCat(startHue);
+    placeFood();
+    updateStats();
+  }
+
+  // Queue a turn. Compared against the last queued heading, so two quick presses can't fold the snake back on itself.
+  function turn(dx, dy) {
+    if (state === 'ready') state = 'playing';
     if (state !== 'playing') return;
-    const prev = queue.length ? queue[queue.length - 1] : dir;
-    // Ignore reversals and repeats of the current heading
-    if (prev.x === x && prev.y === y) return;
-    if (prev.x === -x && prev.y === -y) return;
-    if (queue.length < 2) queue.push({ x, y });
+    const [px, py] = queue.length ? queue[queue.length - 1] : dir;
+    if ((px === dx && py === dy) || (px === -dx && py === -dy)) { updateStats(); return; }
+    if (queue.length < 2) queue.push([dx, dy]);
+    updateStats();
+  }
+
+  function end(next) {
+    state = next;
+    if (score > best) {
+      best = score;
+      try { localStorage.setItem('sparkles-snake-best', best); } catch {}
+    }
+    updateStats();
   }
 
   function step() {
     if (queue.length) dir = queue.shift();
-    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
-    const eating = food && head.x === food.x && head.y === food.y;
-    // The tail moves away this tick unless we're growing, so it isn't an obstacle
-    const body = eating ? snake : snake.slice(0, -1);
-
-    if (head.x < 0 || head.y < 0 || head.x >= CELLS || head.y >= CELLS ||
-        body.some(s => s.x === head.x && s.y === head.y)) {
-      return end('Game over');
+    const head = snake[0], tail = snake[snake.length - 1];
+    const x = head % W + dir[0], y = ((head / W) | 0) + dir[1];
+    if (x < 0 || y < 0 || x >= W || y >= H) return end('over');
+    const next = x + y * W;
+    // The tail moves out of the way this step, so it isn't an obstacle
+    if (occ[next] && next !== tail) return end('over');
+    const alien = aliens.get(next);
+    if (alien) {
+      if (alien.age >= ALIEN_WARN) return end('over');
+      aliens.delete(next); // still beaming in: the cat scares it off
     }
 
-    snake.unshift(head);
-    if (eating) {
+    if (next === food) {
+      prevTail = tail;
+      snake.unshift(next);
+      occ[next] = 1;
       score++;
-      scoreEl.textContent = score;
-      delay = Math.max(MIN_DELAY, delay - SPEEDUP);
+      burst(next);
+      // Jump at least 60 degrees round the colour wheel so the change is obvious
+      paintCat((hue + 60 + Math.floor(Math.random() * 241)) % 360);
       placeFood();
-      if (!food) return end('You win!');
+      if (food < 0) return end('won');
     } else {
-      snake.pop();
+      prevTail = snake.pop();
+      occ[prevTail] = 0;
+      snake.unshift(next);
+      occ[next] = 1;
+    }
+    tickAliens();
+    updateStats();
+  }
+
+  function tickAliens() {
+    const head = snake[0], hx = head % W, hy = (head / W) | 0;
+    const dist = c => Math.abs(c % W - hx) + Math.abs(((c / W) | 0) - hy);
+    const far = (c, min) => dist(c) >= min;
+    const [ax, ay] = queue[0] || dir;
+    const ahead = hx + ax + (hy + ay) * W; // where the cat's next move lands
+    const free = c => !occ[c] && c !== food && !aliens.has(c);
+
+    const movers = [];
+    for (const [c, a] of aliens) {
+      a.from = c;
+      if (++a.age > ALIEN_LIFE) aliens.delete(c);
+      else if (a.age >= ALIEN_WARN && a.age % ALIEN_PACE === 0) movers.push([c, a]);
+    }
+    for (const [c, a] of movers) {
+      const x = c % W, y = (c / W) | 0;
+      // Hunt: step to the open neighbour nearest the cat's head (ties at random). The one square it may not
+      // take is the one the cat is about to enter, so it can't kill you with no time to react.
+      const open = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+        .filter(([dx, dy]) => x + dx >= 0 && y + dy >= 0 && x + dx < W && y + dy < H)
+        .map(([dx, dy]) => x + dx + (y + dy) * W)
+        .filter(n => free(n) && n !== ahead);
+      if (!open.length) continue;
+      const best = Math.min(...open.map(dist));
+      const picks = open.filter(n => dist(n) === best);
+      aliens.delete(c);
+      aliens.set(picks[Math.floor(Math.random() * picks.length)], a);
+    }
+
+    if (--alienIn > 0) return;
+    alienIn = 12 + Math.floor(Math.random() * 10);
+    // One alien at first, more as the score climbs
+    if (aliens.size >= Math.min(5, 1 + Math.floor(score / 3))) return;
+    const spots = [];
+    // Never right on top of the cat's nose
+    for (let c = 0; c < N; c++) if (free(c) && far(c, 5)) spots.push(c);
+    if (spots.length) {
+      const c = spots[Math.floor(Math.random() * spots.length)];
+      aliens.set(c, { age: 0, from: c });
     }
   }
 
-  function end(title) {
-    state = 'over';
-    if (score > best) {
-      best = score;
-      bestEl.textContent = best;
-      try { localStorage.setItem('snake-best', best); } catch {}
-    }
-    show(title, `Score: ${score}`, 'Play again');
+  const $ = id => document.getElementById(id);
+  const STATUS = {
+    ready: 'Press an arrow key or WASD to start',
+    playing: 'Playing',
+    paused: 'Paused',
+    over: 'Game over. Press Space to play again',
+    won: 'Board full. You win!',
+  };
+  function updateStats() {
+    $('s-score').textContent = score;
+    $('s-best').textContent = Math.max(best, score);
+    $('s-length').textContent = snake.length;
+    $('status').textContent = STATUS[state];
+    $('pause').textContent = state === 'paused' ? 'Play' : 'Pause';
   }
 
-  function show(title, text, label) {
-    overlayTitle.textContent = title;
-    overlayText.textContent = text;
-    startBtn.textContent = label;
-    overlay.hidden = false;
-    startBtn.focus();
-  }
+  // ---------- drawing ----------
+  const canvas = $('board'), ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let colors = {}, cs = 1, frame = 0;
 
-  function drawLemon(cx, cy) {
-    const rx = size * 0.4, ry = size * 0.29;
+  function readColors() {
+    const s = getComputedStyle(document.documentElement);
+    for (const k of ['board', 'cyan', 'snake', 'snake-hi', 'snake-eye', 'sparkle'])
+      colors[k] = s.getPropertyValue('--' + k).trim();
+  }
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
+    canvas.width = w;
+    canvas.height = Math.round(w * H / W);
+    cs = canvas.width / W;
+  }
+  new ResizeObserver(resize).observe(canvas);
+
+  const cx = c => (c % W + 0.5) * cs;
+  const cy = c => (((c / W) | 0) + 0.5) * cs;
+
+  const dot = (x, y, rx, ry = rx, rot = 0) => { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); ctx.fill(); };
+  const poly = (pts, close) => {
+    ctx.beginPath();
+    pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+    if (close) ctx.closePath();
+  };
+  const line = (x1, y1, x2, y2) => { poly([[x1, y1], [x2, y2]]); ctx.stroke(); };
+  const stemAndBase = (r, top, half) => { line(0, top, 0, r * 1.15); line(-half, r * 1.15, half, r * 1.15); };
+  // Each drawer fills the liquid first, then strokes the glass over it in the outline style set by drawDrink.
+  const drinkDrawers = {
+    // Pink cosmo in a martini glass, lime on the rim
+    cosmo(r) {
+      ctx.fillStyle = DRINK_COLOR.cosmo;
+      poly([[-r * 0.85, -r * 0.6], [r * 0.85, -r * 0.6], [0, r * 0.25]], true); ctx.fill();
+      poly([[-r * 1.15, -r * 0.95], [r * 1.15, -r * 0.95], [0, r * 0.25]], true); ctx.stroke();
+      stemAndBase(r, r * 0.25, r * 0.6);
+      ctx.fillStyle = '#b6ff3b';
+      dot(r * 0.5, -r * 0.95, r * 0.22);
+    },
+    // Blue lagoon in a highball, pink straw and an orange slice
+    lagoon(r) {
+      ctx.fillStyle = DRINK_COLOR.lagoon;
+      ctx.fillRect(-r * 0.6, -r * 0.6, r * 1.2, r * 1.7);
+      poly([[-r * 0.6, -r * 1.15], [-r * 0.6, r * 1.1], [r * 0.6, r * 1.1], [r * 0.6, -r * 1.15]]); ctx.stroke();
+      ctx.strokeStyle = '#ff4fd8';
+      line(r * 0.1, r * 0.5, r * 0.8, -r * 1.4);
+      ctx.fillStyle = '#ffb02e';
+      dot(-r * 0.6, -r * 1.1, r * 0.32);
+    },
+    // Green mojito in a tumbler with ice and mint
+    mojito(r) {
+      ctx.fillStyle = DRINK_COLOR.mojito;
+      poly([[-r * 0.78, -r * 0.5], [r * 0.78, -r * 0.5], [r * 0.6, r * 1.1], [-r * 0.6, r * 1.1]], true); ctx.fill();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.fillRect(-r * 0.4, -r * 0.2, r * 0.35, r * 0.35);
+      ctx.fillRect(r * 0.1, r * 0.3, r * 0.35, r * 0.35);
+      poly([[-r * 0.85, -r], [-r * 0.6, r * 1.1], [r * 0.6, r * 1.1], [r * 0.85, -r]]); ctx.stroke();
+      ctx.fillStyle = '#19c95a';
+      dot(-r * 0.22, -r * 0.68, r * 0.34, r * 0.17, -0.6);
+      dot(r * 0.22, -r * 0.72, r * 0.34, r * 0.17, 0.5);
+    },
+    // Tequila sunrise, yellow fading to red, in a footed glass with a cherry
+    sunrise(r) {
+      const g = ctx.createLinearGradient(0, -r * 0.75, 0, r * 0.6);
+      g.addColorStop(0, '#ffd23d');
+      g.addColorStop(1, '#ff3b5c');
+      ctx.fillStyle = g;
+      poly([[-r * 0.62, -r * 0.75], [r * 0.62, -r * 0.75], [r * 0.4, r * 0.6], [-r * 0.4, r * 0.6]], true); ctx.fill();
+      poly([[-r * 0.7, -r * 1.2], [-r * 0.4, r * 0.6], [r * 0.4, r * 0.6], [r * 0.7, -r * 1.2]]); ctx.stroke();
+      stemAndBase(r, r * 0.6, r * 0.5);
+      ctx.fillStyle = '#ff2e4d';
+      dot(r * 0.62, -r * 1.2, r * 0.22);
+    },
+    // Violet aviation in a coupe with a lemon twist
+    aviation(r) {
+      ctx.fillStyle = DRINK_COLOR.aviation;
+      ctx.beginPath(); ctx.ellipse(0, -r * 0.5, r * 0.95, r * 0.7, 0, 0, Math.PI); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(0, -r * 0.75, r * 1.1, r * 0.95, 0, 0, Math.PI); ctx.closePath(); ctx.stroke();
+      stemAndBase(r, r * 0.2, r * 0.55);
+      ctx.fillStyle = '#ffe034';
+      dot(-r * 0.55, -r * 0.8, r * 0.2);
+    },
+  };
+  function drawAlien(c, a, t) {
+    const r = cs * 0.36;
     ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(-Math.PI / 5);
-    ctx.fillStyle = colors.food;
+    // Eased between the cell it left and the one it is in now
+    ctx.translate(cx(a.from) + (cx(c) - cx(a.from)) * t, cy(a.from) + (cy(c) - cy(a.from)) * t);
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = ctx.fillStyle = ALIEN_COLOR;
+    if (a.age < ALIEN_WARN) {
+      // Beaming in: dotted ring, ghostly body
+      ctx.lineWidth = cs * 0.06;
+      ctx.setLineDash([cs * 0.1, cs * 0.12]);
+      ctx.beginPath(); ctx.arc(0, 0, cs * 0.45, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 0.35;
+    } else if (ALIEN_LIFE - a.age < 6 && !reduceMotion && Math.floor(performance.now() / 120) % 2) {
+      ctx.globalAlpha = 0.4; // flickers just before it leaves
+    } else {
+      ctx.shadowColor = ALIEN_COLOR;
+      ctx.shadowBlur = cs * 0.4;
+    }
+    // antennae
+    ctx.lineWidth = r * 0.12;
+    for (const s of [-1, 1]) {
+      line(s * r * 0.4, -r * 0.6, s * r * 0.75, -r * 1.2);
+      dot(s * r * 0.75, -r * 1.2, r * 0.13);
+    }
+    // head: wide skull, pointed chin
     ctx.beginPath();
-    ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+    ctx.moveTo(0, r * 1.15);
+    ctx.bezierCurveTo(-r * 1.5, r * 0.2, -r * 1.2, -r * 1.1, 0, -r);
+    ctx.bezierCurveTo(r * 1.2, -r * 1.1, r * 1.5, r * 0.2, 0, r * 1.15);
     ctx.fill();
-    // Pointed tips at each end
-    ctx.beginPath();
-    ctx.arc(-rx, 0, size * 0.09, 0, Math.PI * 2);
-    ctx.arc(rx, 0, size * 0.09, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = colors.leaf;
-    ctx.beginPath();
-    ctx.ellipse(rx * 0.75, -ry * 1.05, size * 0.15, size * 0.07, -Math.PI / 4, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#12062a';
+    dot(-r * 0.42, -r * 0.1, r * 0.36, r * 0.2, 0.6);
+    dot(r * 0.42, -r * 0.1, r * 0.36, r * 0.2, -0.6);
+    ctx.restore();
+  }
+  function drawDrink(c) {
+    const r = cs * 0.34;
+    ctx.save();
+    ctx.translate(cx(c), cy(c));
+    ctx.lineCap = ctx.lineJoin = 'round';
+    ctx.lineWidth = r * 0.13;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
+    drinkDrawers[drink](r);
     ctx.restore();
   }
 
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    ctx.strokeStyle = colors.grid;
-    ctx.lineWidth = 1;
+  function star(x, y, r) {
     ctx.beginPath();
-    for (let i = 1; i < CELLS; i++) {
-      ctx.moveTo(i * size + 0.5, 0); ctx.lineTo(i * size + 0.5, canvas.height);
-      ctx.moveTo(0, i * size + 0.5); ctx.lineTo(canvas.width, i * size + 0.5);
+    ctx.moveTo(x, y - r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.quadraticCurveTo(x, y, x, y + r);
+    ctx.quadraticCurveTo(x, y, x - r, y);
+    ctx.quadraticCurveTo(x, y, x, y - r);
+    ctx.fill();
+  }
+
+  // Glitter thrown off when a cocktail is drunk, half of it in the drink's colour; positions are in cell units.
+  let parts = [], lastDraw = 0;
+  function burst(c) {
+    if (reduceMotion) return;
+    for (let k = 0; k < 12; k++) {
+      const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 4;
+      parts.push({ x: c % W + 0.5, y: ((c / W) | 0) + 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, color: k % 2 ? DRINK_COLOR[drink] : '' });
     }
+  }
+
+  function draw(t) {
+    if (frame++ % 30 === 0) readColors();
+    ctx.fillStyle = colors.board;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Neon grid
+    ctx.strokeStyle = colors.cyan;
+    ctx.globalAlpha = 0.2;
+    ctx.lineWidth = Math.max(1, cs * 0.04);
+    ctx.beginPath();
+    for (let i = 1; i < W; i++) { ctx.moveTo(i * cs, 0); ctx.lineTo(i * cs, canvas.height); }
+    for (let i = 1; i < H; i++) { ctx.moveTo(0, i * cs); ctx.lineTo(canvas.width, i * cs); }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    if (food >= 0) drawDrink(food);
+    for (const [c, a] of aliens) drawAlien(c, a, t);
+
+    // Body: one fat rounded line, with the head and tail eased between cells.
+    const n = snake.length, last = snake[n - 1];
+    const hx = cx(snake[1]) + (cx(snake[0]) - cx(snake[1])) * t;
+    const hy = cy(snake[1]) + (cy(snake[0]) - cy(snake[1])) * t;
+    const tx = cx(prevTail) + (cx(last) - cx(prevTail)) * t;
+    const ty = cy(prevTail) + (cy(last) - cy(prevTail)) * t;
+    const path = () => {
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      for (let i = n - 1; i >= 1; i--) ctx.lineTo(cx(snake[i]), cy(snake[i]));
+      ctx.lineTo(hx, hy);
+    };
+    ctx.lineCap = ctx.lineJoin = 'round';
+    ctx.strokeStyle = colors.snake;
+    ctx.lineWidth = cs * 0.74;
+    ctx.shadowColor = colors.snake;
+    ctx.shadowBlur = cs * 0.6;
+    path(); ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = colors['snake-hi'];
+    ctx.lineWidth = cs * 0.16;
+    ctx.setLineDash([cs * 0.02, cs * 0.5]);
+    path(); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Sparkles: each cell of the body twinkles on its own rhythm.
+    const now = performance.now() / 1000, clock = reduceMotion ? 0 : now;
+    ctx.fillStyle = colors.sparkle;
+    for (let i = 1; i < n; i++) {
+      const c = snake[i];
+      const a = (Math.imul(c + 1, 2654435761) >>> 0) / 4294967296;
+      const b = (Math.imul(c + 7, 2246822519) >>> 0) / 4294967296;
+      const tw = Math.sin(clock * (3 + a * 4) + b * 6.283);
+      if (tw < 0.05) continue;
+      ctx.globalAlpha = tw;
+      star(cx(c) + (a - 0.5) * cs * 0.4, cy(c) + (b - 0.5) * cs * 0.4, cs * (0.1 + 0.16 * tw));
+    }
+
+    const dt = Math.min(0.1, now - lastDraw);
+    lastDraw = now;
+    parts = parts.filter(p => (p.life -= dt * 1.6) > 0);
+    for (const p of parts) {
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color || colors.sparkle;
+      star(p.x * cs, p.y * cs, cs * 0.22 * p.life + cs * 0.05);
+    }
+    ctx.globalAlpha = 1;
+
+    // Head
+    const dx = Math.sign(cx(snake[0]) - cx(snake[1])), dy = Math.sign(cy(snake[0]) - cy(snake[1]));
+    // Cat tail: a slim tip that swishes behind the last body cell.
+    const ux = Math.sign(cx(last) - cx(snake[n - 2])), uy = Math.sign(cy(last) - cy(snake[n - 2]));
+    const swish = Math.sin(clock * 5) * cs * 0.3;
+    ctx.strokeStyle = colors.snake;
+    ctx.lineWidth = cs * 0.24;
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.quadraticCurveTo(tx + ux * cs * 0.5, ty + uy * cs * 0.5,
+      tx + ux * cs * 0.75 - uy * swish, ty + uy * cs * 0.75 + ux * swish);
     ctx.stroke();
 
-    if (food) {
-      drawLemon((food.x + 0.5) * size, (food.y + 0.5) * size);
+    // Cat head, drawn facing +x and rotated to the direction of travel.
+    ctx.save();
+    ctx.translate(hx, hy);
+    ctx.rotate(Math.atan2(dy, dx));
+    ctx.scale(cs, cs);
+    for (const s of [-1, 1]) {
+      ctx.fillStyle = colors.snake;
+      ctx.beginPath(); ctx.moveTo(0.16, s * 0.3); ctx.lineTo(-0.34, s * 0.26); ctx.lineTo(-0.16, s * 0.7); ctx.fill();
+      ctx.fillStyle = colors['snake-hi'];
+      ctx.beginPath(); ctx.moveTo(0.04, s * 0.36); ctx.lineTo(-0.22, s * 0.34); ctx.lineTo(-0.14, s * 0.58); ctx.fill();
     }
-
-    snake.forEach((s, i) => {
-      ctx.fillStyle = i === 0 ? colors.head : colors.snake;
-      ctx.beginPath();
-      ctx.roundRect(s.x * size + 1.5, s.y * size + 1.5, size - 3, size - 3, 5);
-      ctx.fill();
-    });
-  }
-
-  function loop(now) {
-    requestAnimationFrame(loop);
-    const dt = Math.min(now - last, 250);
-    last = now;
-    if (state !== 'playing') return;
-    acc += dt;
-    while (acc >= delay && state === 'playing') {
-      acc -= delay;
-      step();
+    ctx.fillStyle = colors.snake;
+    ctx.beginPath(); ctx.arc(0, 0, 0.46, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = colors['snake-hi'];
+    ctx.lineWidth = 0.03;
+    for (const s of [-1, 1]) {
+      // whiskers
+      for (const w of [0.42, 0.62, 0.8]) {
+        ctx.beginPath(); ctx.moveTo(0.3, s * 0.1); ctx.lineTo(0.3 + (0.7 - w) * 0.6, s * w); ctx.stroke();
+      }
+      // eye with a slit pupil
+      ctx.fillStyle = colors.sparkle;
+      ctx.beginPath(); ctx.ellipse(0.1, s * 0.2, 0.1, 0.12, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = colors['snake-eye'];
+      ctx.beginPath(); ctx.ellipse(0.12, s * 0.2, 0.09, 0.035, 0, 0, Math.PI * 2); ctx.fill();
     }
-    draw();
+    // nose
+    ctx.fillStyle = colors['snake-eye'];
+    ctx.beginPath(); ctx.moveTo(0.4, 0); ctx.lineTo(0.31, -0.06); ctx.lineTo(0.31, 0.06); ctx.fill();
+    ctx.restore();
+
+    // Banner over the board while the game is stopped
+    const banner = { paused: ['PAUSED', 'Space or P to resume'], over: ['GAME OVER', 'Space to play again'], won: ['YOU WIN', 'Space to play again'] }[state];
+    if (banner) {
+      ctx.fillStyle = colors.board;
+      ctx.globalAlpha = 0.6;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 1;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = colors.cyan;
+      ctx.shadowBlur = cs * 0.6;
+      ctx.fillStyle = colors.cyan;
+      ctx.font = `${cs * 2}px Audiowide, "Avenir Next", sans-serif`;
+      ctx.fillText(banner[0], canvas.width / 2, canvas.height / 2 - cs * 0.6);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = colors.sparkle;
+      ctx.font = `${cs * 0.7}px Audiowide, "Avenir Next", sans-serif`;
+      ctx.fillText(banner[1], canvas.width / 2, canvas.height / 2 + cs * 1.2);
+    }
   }
 
-  function start() {
-    reset();
-    state = 'playing';
-    acc = 0;
-    overlay.hidden = true;
-    draw();
-  }
-
-  function togglePause() {
+  // ---------- loop ----------
+  let acc = 0, lastTime = 0;
+  function tick(now) {
+    const dt = Math.min(0.25, (now - lastTime) / 1000 || 0);
+    lastTime = now;
+    const interval = 1 / +$('speed').value;
     if (state === 'playing') {
-      state = 'paused';
-      show('Paused', 'Press Space to continue', 'Resume');
-    } else if (state === 'paused') {
-      state = 'playing';
-      acc = 0;
-      overlay.hidden = true;
+      acc += dt;
+      while (acc >= interval && state === 'playing') { step(); acc -= interval; }
     }
+    const moving = state === 'playing' || state === 'paused';
+    draw(moving && !reduceMotion ? Math.min(1, acc / interval) : 1);
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- input ----------
+  function togglePause() {
+    if (state === 'playing') state = 'paused';
+    else if (state === 'paused') state = 'playing';
+    updateStats();
   }
 
   const KEYS = {
-    ArrowUp: [0, -1], w: [0, -1], W: [0, -1],
-    ArrowDown: [0, 1], s: [0, 1], S: [0, 1],
-    ArrowLeft: [-1, 0], a: [-1, 0], A: [-1, 0],
-    ArrowRight: [1, 0], d: [1, 0], D: [1, 0],
+    ArrowUp: [0, -1], w: [0, -1],
+    ArrowDown: [0, 1], s: [0, 1],
+    ArrowLeft: [-1, 0], a: [-1, 0],
+    ArrowRight: [1, 0], d: [1, 0],
   };
-
   addEventListener('keydown', e => {
-    if (e.key === ' ') {
-      e.preventDefault();
-      if (state === 'playing' || state === 'paused') togglePause();
-      else start();
-      return;
-    }
-    if (e.key === 'Enter' && state !== 'playing' && state !== 'paused') {
-      e.preventDefault();
-      start();
-      return;
-    }
-    const k = KEYS[e.key];
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
     if (k) {
+      // Also keeps arrows from scrolling the page or nudging the speed slider
       e.preventDefault();
       turn(k[0], k[1]);
+    } else if (e.key === ' ' || e.key === 'Enter') {
+      if (e.target instanceof HTMLButtonElement) return; // let the focused button do its own thing
+      e.preventDefault();
+      if (state === 'over' || state === 'won') reset();
+      else togglePause();
+    } else if (e.key === 'p' || e.key === 'P') {
+      togglePause();
     }
-  });
-
-  startBtn.addEventListener('click', () => {
-    if (state === 'paused') togglePause();
-    else start();
   });
 
   let touch = null;
@@ -314,12 +783,34 @@
   addEventListener('pointerup', () => { touch = null; });
   addEventListener('blur', () => { if (state === 'playing') togglePause(); });
 
+  $('pause').addEventListener('click', togglePause);
+  $('restart').addEventListener('click', e => { reset(); e.currentTarget.blur(); });
+
+  // ---------- colour ----------
+  // startHue is what the slider picks; hue is the cat right now, which moves on with every drink.
+  let startHue = 313, hue = 313;
+  function paintCat(h) {
+    hue = h;
+    const root = document.documentElement.style;
+    root.setProperty('--snake', `hsl(${h} 100% 62%)`);
+    root.setProperty('--snake-hi', `hsl(${h} 100% 84%)`);
+    readColors();
+  }
+  function setStartHue(h, save) {
+    startHue = h;
+    document.documentElement.style.setProperty('--start-hue', h);
+    $('hue').value = h;
+    paintCat(h);
+    if (save) try { localStorage.setItem('sparkles-cat-hue', h); } catch {}
+  }
+  $('hue').addEventListener('input', e => setStartHue(+e.target.value, true));
+  let savedHue = NaN;
+  try { savedHue = parseInt(localStorage.getItem('sparkles-cat-hue'), 10); } catch {}
+  setStartHue(savedHue >= 0 && savedHue <= 360 ? savedHue : 313, false);
+
+  resize();
   reset();
-  state = 'ready';
-  draw();
-  last = performance.now();
-  acc = 0;
-  requestAnimationFrame(loop);
+  requestAnimationFrame(tick);
 })();
 </script>
 </body>
