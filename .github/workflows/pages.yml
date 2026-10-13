@@ -1,0 +1,36 @@
+name: Publish to GitHub Pages
+
+# When to run: every push to main, or by hand from the Actions tab
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# What the job is allowed to do: read the code, publish to Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one publish at a time; a newer push waits for the current one
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Copy the repo onto GitHub's machine
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      # Bundle the whole folder as the site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      # Hand the bundle to Pages
+      - id: deployment
+        uses: actions/deploy-pages@v4
